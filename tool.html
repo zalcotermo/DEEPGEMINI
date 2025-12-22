@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced OSINT Tool</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            border-radius: 5px 5px 0 0;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 10px 16px;
+            transition: 0.3s;
+            font-size: 16px;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            animation: fadeEffect 1s;
+        }
+        @keyframes fadeEffect {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .api-status {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e8f4fc;
+            border-radius: 4px;
+        }
+        .status-item {
+            margin-bottom: 5px;
+        }
+        .status-active {
+            color: #27ae60;
+        }
+        .status-inactive {
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Advanced OSINT Investigation Tool</h1>
+        
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'phone')">Phone Lookup</button>
+            <button class="tablinks" onclick="openTab(event, 'email')">Email Lookup</button>
+            <button class="tablinks" onclick="openTab(event, 'mac')">MAC/BSSID</button>
+            <button class="tablinks" onclick="openTab(event, 'username')">Username</button>
+            <button class="tablinks" onclick="openTab(event, 'person')">Person Search</button>
+            <button class="tablinks" onclick="openTab(event, 'image')">Image Search</button>
+        </div>
+        
+        <div id="phone" class="tabcontent" style="display: block;">
+            <h2>Phone Number Investigation</h2>
+            <div class="form-group">
+                <label for="phoneInput">Phone Number (with country code):</label>
+                <input type="text" id="phoneInput" placeholder="e.g., +12025551234">
+            </div>
+            <button onclick="investigate('phone')">Investigate</button>
+            <div id="phoneResults" class="results"></div>
+        </div>
+        
+        <div id="email" class="tabcontent">
+            <h2>Email Address Investigation</h2>
+            <div class="form-group">
+                <label for="emailInput">Email Address:</label>
+                <input type="text" id="emailInput" placeholder="e.g., example@domain.com">
+            </div>
+            <button onclick="investigate('email')">Investigate</button>
+            <div id="emailResults" class="results"></div>
+        </div>
+        
+        <div id="mac" class="tabcontent">
+            <h2>MAC Address/BSSID Investigation</h2>
+            <div class="form-group">
+                <label for="macInput">MAC Address/BSSID:</label>
+                <input type="text" id="macInput" placeholder="e.g., 00:1A:2B:3C:4D:5E">
+            </div>
+            <button onclick="investigate('mac')">Investigate</button>
+            <div id="macResults" class="results"></div>
+        </div>
+        
+        <div id="username" class="tabcontent">
+            <h2>Username Investigation</h2>
+            <div class="form-group">
+                <label for="usernameInput">Username:</label>
+                <input type="text" id="usernameInput" placeholder="e.g., johndoe">
+            </div>
+            <button onclick="investigate('username')">Investigate</button>
+            <div id="usernameResults" class="results"></div>
+        </div>
+        
+        <div id="person" class="tabcontent">
+            <h2>Person Investigation</h2>
+            <div class="form-group">
+                <label for="nameInput">Full Name:</label>
+                <input type="text" id="nameInput" placeholder="e.g., John Doe">
+            </div>
+            <div class="form-group">
+                <label for="locationInput">Location (optional):</label>
+                <input type="text" id="locationInput" placeholder="e.g., New York, USA">
+            </div>
+            <button onclick="investigate('person')">Investigate</button>
+            <div id="personResults" class="results"></div>
+        </div>
+        
+        <div id="image" class="tabcontent">
+            <h2>Reverse Image Search</h2>
+            <div class="form-group">
+                <label for="imageInput">Image URL:</label>
+                <input type="text" id="imageInput" placeholder="e.g., https://example.com/image.jpg">
+            </div>
+            <button onclick="investigate('image')">Investigate</button>
+            <div id="imageResults" class="results"></div>
+        </div>
+        
+        <div id="results">
+            <h3>Investigation Results</h3>
+            <pre id="output"></pre>
+        </div>
+        
+        <div class="api-status">
+            <h3>API Status</h3>
+            <div class="status-item">
+                Numverify: <span id="numverifyStatus" class="status-inactive">Inactive</span>
+            </div>
+            <div class="status-item">
+                Hunter.io: <span id="hunterStatus" class="status-inactive">Inactive</span>
+            </div>
+            <div class="status-item">
+                IPQualityScore: <span id="ipqualityStatus" class="status-inactive">Inactive</span>
+            </div>
+            <div class="status-item">
+                VirusTotal: <span id="virustotalStatus" class="status-inactive">Inactive</span>
+            </div>
+            <div class="status-item">
+                OpenCage: <span id="opencageStatus" class="status-inactive">Inactive</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        function investigate(type) {
+            const output = document.getElementById('output');
+            output.innerHTML = "Investigating... Please wait...";
+            
+            let input, endpoint;
+            switch(type) {
+                case 'phone':
+                    input = document.getElementById('phoneInput').value;
+                    endpoint = '/phone';
+                    break;
+                case 'email':
+                    input = document.getElementById('emailInput').value;
+                    endpoint = '/email';
+                    break;
+                case 'mac':
+                    input = document.getElementById('macInput').value;
+                    endpoint = '/mac';
+                    break;
+                case 'username':
+                    input = document.getElementById('usernameInput').value;
+                    endpoint = '/username';
+                    break;
+                case 'person':
+                    input = document.getElementById('nameInput').value;
+                    const location = document.getElementById('locationInput').value;
+                    endpoint = `/person?name=${encodeURIComponent(input)}&location=${encodeURIComponent(location)}`;
+                    input = `${input} ${location ? `(${location})` : ''}`;
+                    break;
+                case 'image':
+                    input = document.getElementById('imageInput').value;
+                    endpoint = '/image';
+                    break;
+                default:
+                    output.innerHTML = "Invalid investigation type";
+                    return;
+            }
+            
+            if (!input) {
+                output.innerHTML = "Please enter a value to investigate";
+                return;
+            }
+            
+            // In a real implementation, this would call your backend API
+            // For this demo, we'll simulate a response
+            simulateAPIRequest(type, input, endpoint);
+        }
+        
+        function simulateAPIRequest(type, input, endpoint) {
+            const output = document.getElementById('output');
+            
+            // Simulate API delay
+            setTimeout(() => {
+                let response;
+                
+                switch(type) {
+                    case 'phone':
+                        response = {
+                            input: input,
+                            type: 'phone',
+                            numverify: {
+                                valid: true,
+                                number: input,
+                                local_format: input.replace('+', ''),
+                                international_format: input,
+                                country_prefix: input.startsWith('+1') ? '+1' : input.substring(0,3),
+                                country_code: input.startsWith('+1') ? 'US' : 'UK',
+                                country_name: input.startsWith('+1') ? 'United States' : 'United Kingdom',
+                                location: input.startsWith('+1') ? 'North America' : 'Europe',
+                                carrier: input.startsWith('+1') ? 'Verizon Wireless' : 'Vodafone',
+                                line_type: input.startsWith('+1') ? 'mobile' : 'landline'
+                            },
+                            opencage: {
+                                formatted: input.startsWith('+1') ? 'New York, NY, USA' : 'London, UK',
+                                geometry: {
+                                    lat: input.startsWith('+1') ? 40.7128 : 51.5074,
+                                    lng: input.startsWith('+1') ? -74.0060 : -0.1278
+                                }
+                            }
+                        };
+                        break;
+                    case 'email':
+                        response = {
+                            input: input,
+                            type: 'email',
+                            hunter: {
+                                status: "valid",
+                                result: "deliverable",
+                                score: 85,
+                                regexp: true,
+                                gibberish: false,
+                                disposable: false,
+                                webmail: false,
+                                mx_records: true,
+                                smtp_server: true,
+                                smtp_check: true,
+                                accept_all: false,
+                                sources: [
+                                    {
+                                        domain: "domain.com",
+                                        uri: "https://domain.com/about",
+                                        extracted_on: "2023-01-01",
+                                        still_on_page: true
+                                    }
+                                ]
+                            },
+                            ipquality: {
+                                valid: true,
+                                disposable: false,
+                                timed_out: false,
+                                deliverability: "high",
+                                catch_all: false,
+                                common: true,
+                                dns_valid: true,
+                                frequent_complainer: false,
+                                generic: false,
+                                honeypot: false,
+                                spam_trap_score: "low",
+                                suspect: false,
+                                recent_abuse: false,
+                                fraud_score: 0,
+                                suggested_domain: "domain.com",
+                                first_seen: {
+                                    human: "3 years ago",
+                                    timestamp: "2020-01-01",
+                                    iso: "2020-01-01T00:00:00Z"
+                                }
+                            }
+                        };
+                        break;
+                    case 'mac':
+                        response = {
+                            input: input,
+                            type: 'mac',
+                            vendor: "Apple, Inc.",
+                            opencellid: {
+                                status: "ok",
+                                balance: 100,
+                                lat: 37.7749,
+                                lon: -122.4194,
+                                accuracy: 1000,
+                                address: {
+                                    city: "San Francisco",
+                                    country: "United States",
+                                    country_code: "US",
+                                    road: "Market Street",
+                                    house_number: "1",
+                                    postcode: "94105",
+                                    state: "California"
+                                }
+                            }
+                        };
+                        break;
+                    case 'username':
+                        response = {
+                            input: input,
+                            type: 'username',
+                            platforms: {
+                                facebook: {
+                                    exists: true,
+                                    url: `https://facebook.com/${input}`,
+                                    name: "John Doe"
+                                },
+                                twitter: {
+                                    exists: true,
+                                    url: `https://twitter.com/${input}`,
+                                    name: "John Doe"
+                                },
+                                instagram: {
+                                    exists: false
+                                },
+                                linkedin: {
+                                    exists: true,
+                                    url: `https://linkedin.com/in/${input}`,
+                                    name: "John Doe"
+                                }
+                            }
+                        };
+                        break;
+                    case 'person':
+                        response = {
+                            input: input,
+                            type: 'person',
+                            possible_matches: [
+                                {
+                                    name: "John Doe",
+                                    age: 35,
+                                    locations: ["New York, NY", "San Francisco, CA"],
+                                    emails: ["john.doe@example.com", "jdoe@gmail.com"],
+                                    phones: ["+12025551234"],
+                                    social_profiles: [
+                                        {
+                                            platform: "facebook",
+                                            url: "https://facebook.com/johndoe",
+                                            username: "johndoe"
+                                        },
+                                        {
+                                            platform: "linkedin",
+                                            url: "https://linkedin.com/in/johndoe",
+                                            username: "johndoe"
+                                        }
+                                    ]
+                                }
+                            ]
+                        };
+                        break;
+                    case 'image':
+                        response = {
+                            input: input,
+                            type: 'image',
+                            searches: {
+                                google: {
+                                    url: `https://www.google.com/searchbyimage?image_url=${input}`,
+                                    results: "About 1,230 results"
+                                },
+                                tineye: {
+                                    url: `https://www.tineye.com/search?url=${input}`,
+                                    results: "42 matches found"
+                                }
+                            }
+                        };
+                        break;
+                }
+                
+                output.innerHTML = JSON.stringify(response, null, 2);
+                
+                // Update API status indicators
+                if (type === 'phone') {
+                    document.getElementById('numverifyStatus').className = 'status-active';
+                    document.getElementById('opencageStatus').className = 'status-active';
+                }
+                if (type === 'email') {
+                    document.getElementById('hunterStatus').className = 'status-active';
+                    document.getElementById('ipqualityStatus').className = 'status-active';
+                    document.getElementById('virustotalStatus').className = 'status-active';
+                }
+                
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
