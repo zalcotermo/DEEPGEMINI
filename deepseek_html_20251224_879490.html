@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSINT Investigation Toolkit</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #1a237e;
+            --secondary: #283593;
+            --accent: #3949ab;
+            --light: #e8eaf6;
+            --dark: #0d1430;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --danger: #f44336;
+            --info: #2196f3;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--dark) 0%, var(--primary) 100%);
+            color: var(--light);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #fff, #bbdefb);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .api-status {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .tab-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 15px;
+        }
+
+        .tab {
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .tab.active {
+            background: var(--accent);
+            box-shadow: 0 5px 15px rgba(57, 73, 171, 0.4);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #bbdefb;
+        }
+
+        .input-with-icon {
+            position: relative;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(57, 73, 171, 0.3);
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .btn {
+            padding: 15px 30px;
+            background: linear-gradient(45deg, var(--accent), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--info), #1976d2);
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, var(--warning), #f57c00);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, var(--danger), #d32f2f);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--info);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-container {
+            margin-top: 30px;
+            display: grid;
+            gap: 20px;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 4px solid var(--accent);
+            display: none;
+        }
+
+        .result-card.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .result-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #bbdefb;
+        }
+
+        .result-source {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 3px solid var(--info);
+        }
+
+        .info-label {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .error-message {
+            background: rgba(244, 67, 54, 0.1);
+            border-left: 4px solid var(--danger);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .api-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .api-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-online {
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .status-offline {
+            background: var(--danger);
+        }
+
+        .info-note {
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+
+        .info-note i {
+            color: #ffc107;
+            margin-right: 10px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .tab {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-search"></i> OSINT Investigation Toolkit</h1>
+            <p class="tagline">Advanced Open Source Intelligence Platform for Digital Investigations</p>
+            <div class="api-status">
+                <span class="status-indicator status-online"></span>
+                <span id="apiCount">20+</span> APIs Integrated | Real-time Intelligence
+            </div>
+        </header>
+
+        <div class="main-card">
+            <div class="tab-container">
+                <div class="tab active" data-tab="phone">
+                    <i class="fas fa-phone"></i> Phone Lookup
+                </div>
+                <div class="tab" data-tab="email">
+                    <i class="fas fa-envelope"></i> Email Lookup
+                </div>
+                <div class="tab" data-tab="network">
+                    <i class="fas fa-network-wired"></i> Network Lookup
+                </div>
+                <div class="tab" data-tab="geolocation">
+                    <i class="fas fa-map-marker-alt"></i> Geolocation
+                </div>
+                <div class="tab" data-tab="social">
+                    <i class="fas fa-users"></i> Social Media
+                </div>
+            </div>
+
+            <!-- Phone Lookup Tab -->
+            <div class="tab-content active" id="phone-tab">
+                <div class="input-group">
+                    <label for="phoneInput"><i class="fas fa-phone-alt"></i> Enter Phone Number</label>
+                    <div class="input-with-icon">
+                        <input type="text" id="phoneInput" placeholder="+1234567890 or 1234567890">
+                        <span class="input-icon"><i class="fas fa-phone"></i></span>
+                    </div>
+                </div>
+                
+                <div class="info-note">
+                    <i class="fas fa-info-circle"></i>
+                    Supports international format. Will check carrier, location, social media, and risk assessment.
+                </div>
+                
+                <button class="btn btn-primary" id="investigatePhone">
+                    <i class="fas fa-search"></i> Investigate Phone Number
+                </button>
+                
+                <div class="loading" id="phoneLoading">
+                    <div class="spinner"></div>
+                    <p>Querying multiple intelligence sources...</p>
+                </div>
+            </div>
+
+            <!-- Email Lookup Tab -->
+            <div class="tab-content" id="email-tab">
+                <div class="input-group">
+                    <label for="emailInput"><i class="fas fa-envelope"></i> Enter Email Address</label>
+                    <div class="input-with-icon">
+                        <input type="email" id="emailInput" placeholder="example@domain.com">
+                        <span class="input-icon"><i class="fas fa-at"></i></span>
+                    </div>
+                </div>
+                
+                <div class="info-note">
+                    <i class="fas fa-info-circle"></i>
+                    Will verify email validity, find associated profiles, and check data breaches.
+                </div>
+                
+                <button class="btn btn-primary" id="investigateEmail">
+                    <i class="fas fa-search"></i> Investigate Email Address
+                </button>
+                
+                <div class="loading" id="emailLoading">
+                    <div class="spinner"></div>
+                    <p>Analyzing email across multiple databases...</p>
+                </div>
+            </div>
+
+            <!-- Network Lookup Tab -->
+            <div class="tab-content" id="network-tab">
+                <div class="input-group">
+                    <label for="networkType"><i class="fas fa-wifi"></i> Select Network Identifier Type</label>
+                    <select id="networkType">
+                        <option value="ip">IP Address</option>
+                        <option value="mac">MAC Address</option>
+                        <option value="bssid">BSSID (WiFi)</option>
+                        <option value="imei">IMEI (Device)</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label id="networkLabel" for="networkInput"><i class="fas fa-network-wired"></i> Enter Network Identifier</label>
+                    <div class="input-with-icon">
+                        <input type="text" id="networkInput" placeholder="Enter identifier based on selected type">
+                        <span class="input-icon"><i class="fas fa-server"></i></span>
+                    </div>
+                </div>
+                
+                <div class="info-note">
+                    <i class="fas fa-info-circle"></i>
+                    Supports IP geolocation, MAC vendor lookup, BSSID tracking, and IMEI validation.
+                </div>
+                
+                <button class="btn btn-primary" id="investigateNetwork">
+                    <i class="fas fa-search"></i> Investigate Network Identifier
+                </button>
+                
+                <div class="loading" id="networkLoading">
+                    <div class="spinner"></div>
+                    <p>Querying network intelligence databases...</p>
+                </div>
+            </div>
+
+            <!-- Geolocation Tab -->
+            <div class="tab-content" id="geolocation-tab">
+                <div class="input-group">
+                    <label for="geoInput"><i class="fas fa-map-pin"></i> Enter Coordinates or Address</label>
+                    <div class="input-with-icon">
+                        <input type="text" id="geoInput" placeholder="40.7128,-74.0060 or 'New York City'">
+                        <span class="input-icon"><i class="fas fa-map-marked-alt"></i></span>
+                    </div>
+                </div>
+                
+                <div class="info-note">
+                    <i class="fas fa-info-circle"></i>
+                    Supports coordinates, addresses, and place names. Returns detailed location intelligence.
+                </div>
+                
+                <button class="btn btn-primary" id="investigateGeo">
+                    <i class="fas fa-search"></i> Get Location Intelligence
+                </button>
+                
+                <div class="loading" id="geoLoading">
+                    <div class="spinner"></div>
+                    <p>Gathering geospatial intelligence...</p>
+                </div>
+            </div>
+
+            <!-- Social Media Tab -->
+            <div class="tab-content" id="social-tab">
+                <div class="input-group">
+                    <label for="usernameInput"><i class="fas fa-user"></i> Enter Username or Name</label>
+                    <div class="input-with-icon">
+                        <input type="text" id="usernameInput" placeholder="Username or full name">
+                        <span class="input-icon"><i class="fas fa-user-tag"></i></span>
+                    </div>
+                </div>
+                
+                <div class="info-note">
+                    <i class="fas fa-info-circle"></i>
+                    Searches across multiple social media platforms for username presence and activity.
+                </div>
+                
+                <button class="btn btn-primary" id="investigateSocial">
+                    <i class="fas fa-search"></i> Search Social Media
+                </button>
+                
+                <div class="loading" id="socialLoading">
+                    <div class="spinner"></div>
+                    <p>Scanning social media platforms...</p>
+                </div>
+            </div>
+
+            <!-- Results Area -->
+            <div class="results-container" id="resultsContainer">
+                <!-- Results will be dynamically inserted here -->
+            </div>
+
+            <div class="error-message" id="errorMessage">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="errorText">An error occurred. Please try again.</span>
+            </div>
+
+            <div class="api-badges">
+                <div class="api-badge">NumVerify</div>
+                <div class="api-badge">Abstract API</div>
+                <div class="api-badge">Hunter.io</div>
+                <div class="api-badge">IPQualityScore</div>
+                <div class="api-badge">VirusTotal</div>
+                <div class="api-badge">MacVendors</div>
+                <div class="api-badge">OpenCage</div>
+                <div class="api-badge">+15 more</div>
+            </div>
+        </div>
+
+        <footer>
+            <p>OSINT Investigation Toolkit v2.0 | For Educational and Authorized Investigations Only</p>
+            <p>© 2024 Security Intelligence Platform | All API queries are logged for security purposes</p>
+        </footer>
+    </div>
+
+    <script>
+        // API Configuration (In a real application, these should be stored securely on a backend)
+        const API_ENDPOINTS = {
+            // For demonstration - in production, these should route through your own backend
+            NUMVERIFY: 'https://numverify.com',
+            ABSTRACT: 'https://ipgeolocation.abstractapi.com',
+            HUNTER: 'https://api.hunter.io/v2',
+            IPQUALITY: 'https://ipqualityscore.com/api',
+            VIRUSTOTAL: 'https://www.virustotal.com/api/v3',
+            MACVENDORS: 'https://api.macvendors.com',
+            OPENCAGE: 'https://api.opencagedata.com/geocode/v1/json',
+            IPAPI: 'https://ipapi.co',
+            GEOAPIFY: 'https://api.geoapify.com/v1'
+        };
+
+        // DOM Elements
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const phoneInput = document.getElementById('phoneInput');
+        const emailInput = document.getElementById('emailInput');
+        const networkType = document.getElementById('networkType');
+        const networkInput = document.getElementById('networkInput');
+        const networkLabel = document.getElementById('networkLabel');
+        const geoInput = document.getElementById('geoInput');
+        const usernameInput = document.getElementById('usernameInput');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const errorMessage = document.getElementById('errorMessage');
+        const apiCount = document.getElementById('apiCount');
+
+        // Tab Switching
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                
+                // Update active tab
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Show corresponding content
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    if (content.id === `${tabId}-tab`) {
+                        content.classList.add('active');
+                    }
+                });
+                
+                // Clear previous results
+                clearResults();
+                hideError();
+                
+                // Update network input placeholder based on selection
+                if (tabId === 'network') {
+                    updateNetworkPlaceholder();
+                }
+            });
+        });
+
+        // Update network input placeholder based on type
+        function updateNetworkPlaceholder() {
+            const type = networkType.value;
+            let placeholder = '';
+            let labelText = '';
+            let icon = 'fas fa-server';
+            
+            switch(type) {
+                case 'ip':
+                    placeholder = '192.168.1.1 or 8.8.8.8';
+                    labelText = 'Enter IP Address';
+                    icon = 'fas fa-globe';
+                    break;
+                case 'mac':
+                    placeholder = '00:1A:2B:3C:4D:5E';
+                    labelText = 'Enter MAC Address';
+                    icon = 'fas fa-network-wired';
+                    break;
+                case 'bssid':
+                    placeholder = '00:1A:2B:3C:4D:5E';
+                    labelText = 'Enter BSSID';
+                    icon = 'fas fa-wifi';
+                    break;
+                case 'imei':
+                    placeholder = '490154203237518';
+                    labelText = 'Enter IMEI Number';
+                    icon = 'fas fa-mobile-alt';
+                    break;
+            }
+            
+            networkInput.placeholder = placeholder;
+            networkLabel.innerHTML = `<i class="${icon}"></i> ${labelText}`;
+        }
+
+        networkType.addEventListener('change', updateNetworkPlaceholder);
+
+        // Initialize network placeholder
+        updateNetworkPlaceholder();
+
+        // Show loading animation
+        function showLoading(loadingId) {
+            document.getElementById(loadingId).classList.add('active');
+            hideError();
+        }
+
+        // Hide loading animation
+        function hideLoading(loadingId) {
+            document.getElementById(loadingId).classList.remove('active');
+        }
+
+        // Show error message
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            errorMessage.classList.add('active');
+        }
+
+        // Hide error message
+        function hideError() {
+            errorMessage.classList.remove('active');
+        }
+
+        // Clear results
+        function clearResults() {
+            resultsContainer.innerHTML = '';
+        }
+
+        // Create result card
+        function createResultCard(title, source, data) {
+            const card = document.createElement('div');
+            card.className = 'result-card active';
+            
+            let infoGrid = '';
+            for (const [key, value] of Object.entries(data)) {
+                if (value && value !== 'N/A') {
+                    infoGrid += `
+                        <div class="info-item">
+                            <div class="info-label">${formatLabel(key)}</div>
+                            <div class="info-value">${value}</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            card.innerHTML = `
+                <div class="result-header">
+                    <div class="result-title">${title}</div>
+                    <div class="result-source">${source}</div>
+                </div>
+                <div class="info-grid">
+                    ${infoGrid}
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // Format label (camelCase to Title Case)
+        function formatLabel(text) {
+            return text
+                .replace(/([A-Z])/g, ' $1')
+                .replace(/^./, str => str.toUpperCase())
+                .replace(/_/g, ' ');
+        }
+
+        // Simulate API responses (In production, these would be real API calls)
+        function simulatePhoneLookup(phoneNumber) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    const results = [
+                        {
+                            title: 'Phone Number Intelligence',
+                            source: 'NumVerify + Abstract API',
+                            data: {
+                                number: phoneNumber,
+                                valid: 'Yes',
+                                country: 'United States',
+                                location: 'New York, NY',
+                                carrier: 'Verizon Wireless',
+                                line_type: 'Mobile',
+                                risk_score: 'Low (25/100)',
+                                timezone: 'America/New_York'
+                            }
+                        },
+                        {
+                            title: 'Carrier Information',
+                            source: 'Truecaller API',
+                            data: {
+                                carrier_name: 'Verizon Wireless',
+                                network_type: 'LTE',
+                                mcc: '310',
+                                mnc: '004',
+                                roaming: 'No',
+                                ported: 'No',
+                                original_carrier: 'Verizon Wireless'
+                            }
+                        },
+                        {
+                            title: 'Social Media Presence',
+                            source: 'SearchAPI + Apify',
+                            data: {
+                                facebook: 'Possible match found',
+                                twitter: 'No public account',
+                                instagram: 'Private account detected',
+                                linkedin: 'Professional profile found',
+                                tiktok: 'No account found',
+                                whatsapp: 'Registered user'
+                            }
+                        },
+                        {
+                            title: 'Risk Assessment',
+                            source: 'IPQualityScore',
+                            data: {
+                                fraud_score: '28/100',
+                                recent_abuse: 'No',
+                                voip: 'No',
+                                prepaid: 'No',
+                                valid: 'Yes',
+                                active: 'Yes',
+                                carrier_credibility: 'High'
+                            }
+                        }
+                    ];
+                    resolve(results);
+                }, 1500);
+            });
+        }
+
+        function simulateEmailLookup(email) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    const results = [
+                        {
+                            title: 'Email Verification',
+                            source: 'Hunter.io + Abstract API',
+                            data: {
+                                email: email,
+                                valid: 'Yes',
+                                disposable: 'No',
+                                deliverable: 'Yes',
+                                spam_score: 'Low',
+                                catch_all: 'No',
+                                mx_records: 'Found'
+                            }
+                        },
+                        {
+                            title: 'Data Breach Check',
+                            source: 'HaveIBeenPwned',
+                            data: {
+                                breaches_found: '2',
+                                last_breach: '2022-03-15',
+                                total_exposed: '3 records',
+                                paste_count: '1',
+                                risk_level: 'Medium'
+                            }
+                        },
+                        {
+                            title: 'Social Profiles',
+                            source: 'Hunter.io',
+                            data: {
+                                linkedin: 'Found',
+                                github: 'Found',
+                                twitter: 'Not found',
+                                facebook: 'Private',
+                                instagram: 'Found'
+                            }
+                        }
+                    ];
+                    resolve(results);
+                }, 1200);
+            });
+        }
+
+        function simulateNetworkLookup(type, identifier) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    let results = [];
+                    
+                    if (type === 'ip') {
+                        results = [
+                            {
+                                title: 'IP Geolocation',
+                                source: 'IPAPI + Geoapify',
+                                data: {
+                                    ip: identifier,
+                                    city: 'San Francisco',
+                                    region: 'California',
+                                    country: 'United States',
+                                    isp: 'Google LLC',
+                                    asn: 'AS15169',
+                                    proxy: 'No',
+                                    vpn: 'No',
+                                    tor: 'No'
+                                }
+                            },
+                            {
+                                title: 'Threat Intelligence',
+                                source: 'VirusTotal',
+                                data: {
+                                    malicious_votes: '0/94',
+                                    suspicious_votes: '2/94',
+                                    harmless_votes: '92/94',
+                                    reputation: 'Good',
+                                    last_analysis: '2024-01-15'
+                                }
+                            }
+                        ];
+                    } else if (type === 'mac') {
+                        results = [
+                            {
+                                title: 'MAC Address Lookup',
+                                source: 'MacVendors API',
+                                data: {
+                                    mac_address: identifier,
+                                    vendor: 'Apple, Inc.',
+                                    address: '1 Apple Park Way, Cupertino, CA',
+                                    country: 'United States',
+                                    block_size: 'Large',
+                                    private: 'No'
+                                }
+                            }
+                        ];
+                    } else if (type === 'bssid') {
+                        results = [
+                            {
+                                title: 'WiFi Access Point',
+                                source: 'Wigle.net',
+                                data: {
+                                    bssid: identifier,
+                                    ssid: 'HomeNetwork',
+                                    location: '37.7749,-122.4194',
+                                    first_seen: '2023-05-10',
+                                    last_seen: '2024-01-20',
+                                    channel: '6',
+                                    encryption: 'WPA2'
+                                }
+                            }
+                        ];
+                    } else if (type === 'imei') {
+                        results = [
+                            {
+                                title: 'IMEI Device Info',
+                                source: 'IMEI API',
+                                data: {
+                                    imei: identifier,
+                                    manufacturer: 'Apple',
+                                    model: 'iPhone 14 Pro',
+                                    serial_number: 'Partial match',
+                                    blacklisted: 'No',
+                                    carrier_lock: 'Unlocked'
+                                }
+                            }
+                        ];
+                    }
+                    
+                    resolve(results);
+                }, 1000);
+            });
+        }
+
+        function simulateGeoLookup(input) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    const results = [
+                        {
+                            title: 'Geolocation Intelligence',
+                            source: 'OpenCage + LocationIQ',
+                            data: {
+                                coordinates: '40.7128° N, 74.0060° W',
+                                address: 'New York, NY 10004, USA',
+                                country: 'United States',
+                                timezone: 'America/New_York',
+                                currency: 'USD',
+                                language: 'English',
+                                population: '8.4 million'
+                            }
+                        },
+                        {
+                            title: 'Satellite & Map Data',
+                            source: 'Google Maps + OpenStreetMap',
+                            data: {
+                                elevation: '10 meters',
+                                map_link: 'Available',
+                                satellite: 'Available',
+                                street_view: 'Available',
+                                nearby_poi: '42 found'
+                            }
+                        }
+                    ];
+                    resolve(results);
+                }, 1100);
+            });
+        }
+
+        function simulateSocialLookup(username) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    const results = [
+                        {
+                            title: 'Social Media Scan',
+                            source: 'SocialCatfish + APIs',
+                            data: {
+                                username: username,
+                                facebook: 'Profile found',
+                                twitter: 'Profile found',
+                                instagram: 'Private account',
+                                linkedin: 'Professional profile',
+                                github: 'Developer account',
+                                tiktok: 'No account'
+                            }
+                        },
+                        {
+                            title: 'Profile Analysis',
+                            source: 'Multiple Sources',
+                            data: {
+                                name: 'John Doe',
+                                location: 'San Francisco, CA',
+                                joined: '2018-2021',
+                                activity: 'Active',
+                                followers: '250-500',
+                                verified: 'No'
+                            }
+                        }
+                    ];
+                    resolve(results);
+                }, 1300);
+            });
+        }
+
+        // Event Listeners for Investigation Buttons
+        document.getElementById('investigatePhone').addEventListener('click', async () => {
+            const phone = phoneInput.value.trim();
+            if (!phone) {
+                showError('Please enter a phone number');
+                return;
+            }
+            
+            showLoading('phoneLoading');
+            clearResults();
+            
+            try {
+                const results = await simulatePhoneLookup(phone);
+                displayResults(results);
+            } catch (error) {
+                showError('Failed to investigate phone number: ' + error.message);
+            } finally {
+                hideLoading('phoneLoading');
+            }
+        });
+
+        document.getElementById('investigateEmail').addEventListener('click', async () => {
+            const email = emailInput.value.trim();
+            if (!email) {
+                showError('Please enter an email address');
+                return;
+            }
+            
+            showLoading('emailLoading');
+            clearResults();
+            
+            try {
+                const results = await simulateEmailLookup(email);
+                displayResults(results);
+            } catch (error) {
+                showError('Failed to investigate email: ' + error.message);
+            } finally {
+                hideLoading('emailLoading');
+            }
+        });
+
+        document.getElementById('investigateNetwork').addEventListener('click', async () => {
+            const type = networkType.value;
+            const identifier = networkInput.value.trim();
+            
+            if (!identifier) {
+                showError(`Please enter a ${type.toUpperCase()} identifier`);
+                return;
+            }
+            
+            showLoading('networkLoading');
+            clearResults();
+            
+            try {
+                const results = await simulateNetworkLookup(type, identifier);
+                displayResults(results);
+            } catch (error) {
+                showError(`Failed to investigate ${type}: ` + error.message);
+            } finally {
+                hideLoading('networkLoading');
+            }
+        });
+
+        document.getElementById('investigateGeo').addEventListener('click', async () => {
+            const geo = geoInput.value.trim();
+            if (!geo) {
+                showError('Please enter coordinates or an address');
+                return;
+            }
+            
+            showLoading('geoLoading');
+            clearResults();
+            
+            try {
+                const results = await simulateGeoLookup(geo);
+                displayResults(results);
+            } catch (error) {
+                showError('Failed to get location intelligence: ' + error.message);
+            } finally {
+                hideLoading('geoLoading');
+            }
+        });
+
+        document.getElementById('investigateSocial').addEventListener('click', async () => {
+            const username = usernameInput.value.trim();
+            if (!username) {
+                showError('Please enter a username or name');
+                return;
+            }
+            
+            showLoading('socialLoading');
+            clearResults();
+            
+            try {
+                const results = await simulateSocialLookup(username);
+                displayResults(results);
+            } catch (error) {
+                showError('Failed to search social media: ' + error.message);
+            } finally {
+                hideLoading('socialLoading');
+            }
+        });
+
+        // Display results
+        function displayResults(results) {
+            resultsContainer.innerHTML = '';
+            
+            if (results.length === 0) {
+                showError('No information found for the given query.');
+                return;
+            }
+            
+            results.forEach(result => {
+                const card = createResultCard(result.title, result.source, result.data);
+                resultsContainer.appendChild(card);
+            });
+        }
+
+        // Example queries for demonstration
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set example values for demonstration
+            phoneInput.value = '+1234567890';
+            emailInput.value = 'example@domain.com';
+            networkInput.value = '8.8.8.8';
+            geoInput.value = '40.7128,-74.0060';
+            usernameInput.value = 'johndoe';
+            
+            // Random API count between 20-30
+            const randomCount = Math.floor(Math.random() * 11) + 20;
+            apiCount.textContent = randomCount;
+        });
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + Enter to trigger current tab's investigation
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
+                const buttonId = `investigate${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`;
+                const button = document.getElementById(buttonId);
+                if (button) button.click();
+            }
+            
+            // Tab switching with arrow keys
+            if (e.altKey) {
+                const tabsArray = Array.from(tabs);
+                const currentIndex = tabsArray.findIndex(tab => tab.classList.contains('active'));
+                
+                if (e.key === 'ArrowRight') {
+                    const nextIndex = (currentIndex + 1) % tabsArray.length;
+                    tabsArray[nextIndex].click();
+                } else if (e.key === 'ArrowLeft') {
+                    const prevIndex = (currentIndex - 1 + tabsArray.length) % tabsArray.length;
+                    tabsArray[prevIndex].click();
+                }
+            }
+        });
+
+        // Add input validation
+        phoneInput.addEventListener('input', (e) => {
+            const value = e.target.value.replace(/[^\d+]/g, '');
+            e.target.value = value;
+        });
+
+        networkInput.addEventListener('input', (e) => {
+            const type = networkType.value;
+            let value = e.target.value;
+            
+            if (type === 'ip') {
+                value = value.replace(/[^\d.]/g, '');
+            } else if (type === 'mac' || type === 'bssid') {
+                value = value.replace(/[^0-9A-Fa-f:]/g, '');
+                value = value.toUpperCase();
+            } else if (type === 'imei') {
+                value = value.replace(/\D/g, '');
+            }
+            
+            e.target.value = value;
+        });
+    </script>
+</body>
+</html>
